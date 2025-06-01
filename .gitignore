@@ -1,2 +1,5 @@
 .env
 __pycache__/
+.python-version
+.deepeval/
+db.sqlite3
