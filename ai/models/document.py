@@ -3,6 +3,7 @@ import json
 
 class Document(models.Model):
     file_url = models.URLField(max_length=2000)
+    description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

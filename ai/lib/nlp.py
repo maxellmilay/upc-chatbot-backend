@@ -2,22 +2,10 @@ import spacy
 from sentence_transformers import SentenceTransformer
 
 class NLPPreprocessor:
-    def __init__(self, text):
-        self.original_text = text
+    def __init__(self):
         self.nlp_model = spacy.load("en_core_web_md")
         self.sbert_model = SentenceTransformer("all-MiniLM-L6-v2")
-        
-        # Process the text and extract features
-        self.doc = self.nlp_model(self.original_text)
 
-        self.original_tokens = self._extract_tokens()
-        self.pos = self._extract_pos()
-        self.entities = self._extract_entities()
-        
-        self.preprocessed_text, self.preprocessed_tokens = self.preprocess()
-        
-        self.embeddings = self._extract_embeddings()
-    
     def get_data(self):
         """Return all processed data as a dictionary"""
         return {
@@ -30,15 +18,25 @@ class NLPPreprocessor:
             "preprocessed_text": self.preprocessed_text
         }
     
-    def preprocess(self):
+    def preprocess(self, original_text):
         """Main preprocessing pipeline"""
+        self.original_text = original_text
+        self.doc = self.nlp_model(original_text)
+
+        self.original_tokens = self._extract_tokens()
+        self.pos = self._extract_pos()
+        self.entities = self._extract_entities()
+        
         preprocessed_tokens = self._lemmatize()
         preprocessed_tokens = self._remove_stopwords(preprocessed_tokens)
         preprocessed_tokens = self._remove_punctuation(preprocessed_tokens)
         # preprocessed_tokens = self._remove_numbers(preprocessed_tokens)
-        processed_text = " ".join(preprocessed_tokens)
+        self.preprocessed_tokens = preprocessed_tokens
+        self.preprocessed_text = " ".join(preprocessed_tokens)
+        
+        self.embeddings = self._extract_embeddings()
 
-        return processed_text, preprocessed_tokens
+        return self.get_data()
     
     def _extract_tokens(self):
         """Extract tokens from the text"""
