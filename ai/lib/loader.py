@@ -1,15 +1,14 @@
 import tempfile
 import os
 from typing import List
-from langchain.schema import Document
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
-from services.s3 import get_s3_service
+from main.services.s3 import S3Service
 
 class DocumentLoader:
     def __init__(self, s3_key: str):
         self.s3_key = s3_key
         self.file_extension = self._extract_file_extension(s3_key)
-        self.s3_service = get_s3_service()
+        self.s3_service = S3Service()
         self.pages = self.load(s3_key)
     
     def _extract_file_extension(self, s3_key: str) -> str:

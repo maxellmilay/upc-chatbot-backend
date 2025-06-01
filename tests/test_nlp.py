@@ -7,45 +7,51 @@ class NLPPreprocessorTestCase(TestCase):
     
     def setUp(self):
         """Set up test fixtures before each test method."""
-        self.test_text = "Hello world! My name is John Smith and I live in New York City. I have 25 apples."
-        self.simple_text = "The quick brown fox jumps over the lazy dog."
+        self.test_text = "Hello world! My name is John Smith and I live in New York City. I have 25 apples. The quick brown fox jumps over the lazy dog."
         self.nlp_processor = NLPPreprocessor(self.test_text)
-        self.simple_processor = NLPPreprocessor(self.simple_text)
     
     def test_initialization(self):
         """Test that the NLPPreprocessor initializes correctly."""
-        self.assertEqual(self.nlp_processor.text, self.test_text)
+        self.assertEqual(self.nlp_processor.original_text, self.test_text)
         self.assertIsNotNone(self.nlp_processor.nlp_model)
         self.assertIsNotNone(self.nlp_processor.sbert_model)
         self.assertIsNotNone(self.nlp_processor.doc)
-        self.assertIsNotNone(self.nlp_processor.tokens)
+        self.assertIsNotNone(self.nlp_processor.original_tokens)
         self.assertIsNotNone(self.nlp_processor.embeddings)
         self.assertIsNotNone(self.nlp_processor.pos)
         self.assertIsNotNone(self.nlp_processor.entities)
         self.assertIsNotNone(self.nlp_processor.preprocessed_text)
+        self.assertIsNotNone(self.nlp_processor.preprocessed_tokens)
     
     def test_get_data(self):
         """Test that get_data returns the expected dictionary structure."""
         data = self.nlp_processor.get_data()
         
         self.assertIsInstance(data, dict)
-        self.assertIn("text", data)
-        self.assertIn("tokens", data)
+        self.assertIn("original_text", data)
+        self.assertIn("original_tokens", data)
         self.assertIn("embeddings", data)
         self.assertIn("pos", data)
         self.assertIn("entities", data)
         self.assertIn("preprocessed_text", data)
+        self.assertIn("preprocessed_tokens", data)
         
-        self.assertEqual(data["text"], self.test_text)
-        self.assertIsInstance(data["tokens"], list)
+        self.assertEqual(data["original_text"], self.test_text)
+        self.assertIsInstance(data["original_tokens"], list)
         self.assertIsInstance(data["embeddings"], np.ndarray)
         self.assertIsInstance(data["pos"], list)
         self.assertIsInstance(data["entities"], list)
-        self.assertIsInstance(data["preprocessed_text"], list)
+        self.assertIsInstance(data["preprocessed_text"], str)
+        self.assertIsInstance(data["preprocessed_tokens"], list)
+        
+        print(f"\n\nBEFORE NLP PROCESSING: {len(data['original_tokens'])}")
+        print(f"BEFORE TEXT: {data['original_text']}")
+        print(f"AFTER NLP PROCESSING: {len(data['preprocessed_tokens'])}")
+        print(f"AFTER TEXT: {data['preprocessed_text']}\n")
     
     def test_extract_tokens(self):
         """Test token extraction functionality."""
-        tokens = self.simple_processor.tokens
+        tokens = self.nlp_processor.original_tokens
         
         self.assertIsInstance(tokens, list)
         self.assertGreater(len(tokens), 0)
@@ -64,7 +70,7 @@ class NLPPreprocessorTestCase(TestCase):
     
     def test_extract_pos(self):
         """Test part-of-speech tag extraction."""
-        pos_tags = self.simple_processor.pos
+        pos_tags = self.nlp_processor.pos
         
         self.assertIsInstance(pos_tags, list)
         self.assertGreater(len(pos_tags), 0)
@@ -115,7 +121,7 @@ class NLPPreprocessorTestCase(TestCase):
     def test_remove_stopwords(self):
         """Test stopword removal functionality."""
         tokens = ["the", "quick", "brown", "fox", "is", "jumping"]
-        filtered_tokens = self.simple_processor._remove_stopwords(tokens)
+        filtered_tokens = self.nlp_processor._remove_stopwords(tokens)
         
         self.assertIsInstance(filtered_tokens, list)
         self.assertNotIn("the", filtered_tokens)
@@ -128,7 +134,7 @@ class NLPPreprocessorTestCase(TestCase):
     def test_remove_punctuation(self):
         """Test punctuation removal functionality."""
         tokens = ["hello", "!", "world", ".", "how", "?"]
-        filtered_tokens = self.simple_processor._remove_punctuation(tokens)
+        filtered_tokens = self.nlp_processor._remove_punctuation(tokens)
         
         self.assertIsInstance(filtered_tokens, list)
         self.assertNotIn("!", filtered_tokens)
@@ -141,7 +147,7 @@ class NLPPreprocessorTestCase(TestCase):
     def test_remove_numbers(self):
         """Test number removal functionality."""
         tokens = ["hello", "123", "world", "456", "test"]
-        filtered_tokens = self.simple_processor._remove_numbers(tokens)
+        filtered_tokens = self.nlp_processor._remove_numbers(tokens)
         
         self.assertIsInstance(filtered_tokens, list)
         self.assertNotIn("123", filtered_tokens)
@@ -152,14 +158,16 @@ class NLPPreprocessorTestCase(TestCase):
     
     def test_preprocess_pipeline(self):
         """Test the complete preprocessing pipeline."""
-        preprocessed = self.nlp_processor.preprocessed_text
+        preprocessed_tokens = self.nlp_processor.preprocessed_tokens
+        preprocessed_text = self.nlp_processor.preprocessed_text
         
-        self.assertIsInstance(preprocessed, list)
-        self.assertGreater(len(preprocessed), 0)
+        self.assertIsInstance(preprocessed_tokens, list)
+        self.assertIsInstance(preprocessed_text, str)
+        self.assertGreater(len(preprocessed_tokens), 0)
         
         # Check that preprocessing removed stopwords, punctuation, and numbers
         # The exact results depend on spaCy's processing
-        for token in preprocessed:
+        for token in preprocessed_tokens:
             self.assertIsInstance(token, str)
             self.assertNotEqual(token, "!")
             self.assertNotEqual(token, ".")
@@ -169,16 +177,16 @@ class NLPPreprocessorTestCase(TestCase):
         """Test the processor with different types of text input."""
         # Test with empty string
         empty_processor = NLPPreprocessor("")
-        self.assertEqual(empty_processor.text, "")
-        self.assertIsInstance(empty_processor.tokens, list)
+        self.assertEqual(empty_processor.original_text, "")
+        self.assertIsInstance(empty_processor.original_tokens, list)
         
         # Test with only punctuation
         punct_processor = NLPPreprocessor("!@#$%^&*()")
-        self.assertIsInstance(punct_processor.tokens, list)
+        self.assertIsInstance(punct_processor.original_tokens, list)
         
         # Test with only numbers
         num_processor = NLPPreprocessor("123 456 789")
-        self.assertIsInstance(num_processor.tokens, list)
+        self.assertIsInstance(num_processor.original_tokens, list)
     
     def test_embedding_consistency(self):
         """Test that embeddings are consistent for the same text."""
@@ -202,14 +210,6 @@ class NLPPreprocessorTestCase(TestCase):
         data = processor.get_data()
         self.assertIsInstance(data, dict)
         
-        # Print sample output for debugging (similar to test_loaders.py style)
-        print(f"Original text: {data['text']}")
-        print(f"Tokens (first 10): {data['tokens'][:10]}")
-        print(f"POS tags (first 5): {data['pos'][:5]}")
-        print(f"Entities: {data['entities']}")
-        print(f"Preprocessed tokens: {data['preprocessed_text']}")
-        print(f"Embedding shape: {data['embeddings'].shape}")
-        
         # Assertions for chatbot-specific requirements
-        self.assertGreater(len(data['preprocessed_text']), 0)
+        self.assertGreater(len(data['preprocessed_tokens']), 0)
         self.assertEqual(len(data['embeddings']), 384)  # SBERT embedding dimension 
