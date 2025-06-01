@@ -2,15 +2,20 @@ from rest_framework import serializers
 from ai.models.document import Document, DocumentChunk
 
 class DocumentSerializer(serializers.ModelSerializer):
-    chunks = serializers.SerializerMethodField()
+    chunks = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = Document
-        fields = ['id', 'file_url', 'created_at', 'updated_at', 'chunks']
+        fields = ['id', 'file_url', 'description', 'created_at', 'updated_at', 'chunks']
     
     def get_chunks(self, obj):
         return DocumentChunkSerializer(obj.chunks, many=True).data
-        
+    
+class SimpleDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ['id', 'file_url', 'description', 'created_at', 'updated_at']
+
 class DocumentChunkSerializer(serializers.ModelSerializer):
     tokens = serializers.SerializerMethodField()
     embeddings = serializers.SerializerMethodField()
