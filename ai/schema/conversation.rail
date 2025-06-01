@@ -1,0 +1,26 @@
+<rail version="0.1">
+
+  <prompt>
+    You are a helpful assistant. Based on the following documents, answer the user’s question.
+
+    Documents:
+    {{ context }}
+
+    Question:
+    {{ query }}
+
+    Format your response in JSON using this schema.
+  </prompt>
+
+  <output>
+    <object name="response">
+      <string name="answer" description="The answer to the user's question based on the documents." />
+      <list name="sources" description="List of document source filenames used to answer the question.">
+        <string />
+      </list>
+    </object>
+  </output>
+
+  <output_format>json</output_format>
+
+</rail>
