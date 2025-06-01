@@ -30,16 +30,16 @@ class DocumentChunk(models.Model):
     
     @property
     def tokens(self):
-        return json.loads(self.tokens_json)
+        return self.tokens_json
     
     @property
     def embeddings(self):
-        return np.array(json.loads(self.embedding_json))
+        return np.array(self.embedding_json)
     
     @property
     def pos(self):
-        return json.loads(self.pos_json)
+        return self.pos_json
     
     @property
     def entities(self):
-        return json.loads(self.entity_json)
+        return self.entity_json

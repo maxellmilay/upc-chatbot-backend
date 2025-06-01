@@ -21,7 +21,7 @@ class DocumentChunkSerializer(serializers.ModelSerializer):
         return obj.tokens
     
     def get_embeddings(self, obj):
-        return obj.embeddings
+        return obj.embeddings.tolist()
     
     def get_pos(self, obj):
         return obj.pos
