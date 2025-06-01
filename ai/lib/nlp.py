@@ -30,6 +30,7 @@ class NLPPreprocessor:
         preprocessed_tokens = self._lemmatize()
         preprocessed_tokens = self._remove_stopwords(preprocessed_tokens)
         preprocessed_tokens = self._remove_punctuation(preprocessed_tokens)
+        preprocessed_tokens = self._remove_whitespace_tokens(preprocessed_tokens)
         # preprocessed_tokens = self._remove_numbers(preprocessed_tokens)
         self.preprocessed_tokens = preprocessed_tokens
         self.preprocessed_text = " ".join(preprocessed_tokens)
@@ -53,6 +54,10 @@ class NLPPreprocessor:
     def _remove_punctuation(self, preprocessed_tokens):
         """Remove punctuation from tokens"""
         return [preprocessed_token for preprocessed_token in preprocessed_tokens if not self.nlp_model.vocab[preprocessed_token].is_punct]
+    
+    def _remove_whitespace_tokens(self, preprocessed_tokens):
+        """Remove tokens that consist only of whitespace characters (spaces, newlines, tabs, etc.)"""
+        return [preprocessed_token for preprocessed_token in preprocessed_tokens if preprocessed_token.strip()]
     
     # def _remove_numbers(self, preprocessed_tokens):
     #     """Remove numeric tokens"""

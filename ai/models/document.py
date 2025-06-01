@@ -1,8 +1,9 @@
 from django.db import models
 import json
+import numpy as np
 
 class Document(models.Model):
-    file_url = models.URLField(max_length=2000)
+    file_url = models.CharField(max_length=2000)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -33,7 +34,7 @@ class DocumentChunk(models.Model):
     
     @property
     def embeddings(self):
-        return json.loads(self.embedding_json)
+        return np.array(json.loads(self.embedding_json))
     
     @property
     def pos(self):
