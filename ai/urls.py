@@ -1,5 +1,6 @@
 from django.urls import path
 from ai.views.loader import DocumentView, DocumentChunkView, SimpleDocumentChunkView
+from ai.views.retrieval import HybridRetrievalView
 
 urlpatterns = [
     # Document
@@ -9,4 +10,7 @@ urlpatterns = [
     # Document Chunk
     path('simple-document-chunk/', SimpleDocumentChunkView.as_view({'get': 'list'}), name='document-chunk'),
     path('document-chunk/<int:pk>/', DocumentChunkView.as_view({'get': 'retrieve'}), name='document-chunk-detail'),
+
+    # Retrieval
+    path('retrieve/', HybridRetrievalView.as_view({'post': 'retrieve'}), name='retrieval'),
 ]
