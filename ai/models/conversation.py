@@ -5,6 +5,7 @@ from ai.models.document import DocumentChunk
 
 class Conversation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    title = models.CharField(max_length=255, default="New Conversation")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -25,3 +26,4 @@ class Message(models.Model):
     
     def __str__(self):
         return f"Message for {self.conversation.user.username}"
+

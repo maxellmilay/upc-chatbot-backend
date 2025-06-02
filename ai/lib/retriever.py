@@ -1,5 +1,5 @@
 from ai.lib.nlp import NLPPreprocessor
-from ai.models.document import DocumentChunk
+from ai.models.document import DocumentChunk, Document
 from django.contrib.postgres.search import SearchRank, SearchVector
 from ai.utils.retrieval import cosine_sim
 import numpy as np
@@ -34,7 +34,7 @@ class HybridRetriever():
             rank=SearchRank(SearchVector('text'), query)
         ).order_by('-rank')[:self.sparse_k]
         
-        candidate_docs = docs.only("id", "text", "embedding_json", "entity_json")
+        candidate_docs = docs.only("id", "document_id", "text", "embedding_json", "entity_json")
         
         print(f'SPARSE RETRIEVAL RESULTS: {candidate_docs}')
         
@@ -52,9 +52,11 @@ class HybridRetriever():
         # Convert DocumentChunk objects to dictionaries for JSON serialization
         result = []
         for doc in reranked:
+            source = Document.objects.get(id=doc.document_id).description
             result.append({
                 'id': doc.id,
                 'text': doc.text,
+                'source': source
             })
 
         return result

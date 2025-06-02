@@ -33,3 +33,8 @@ class SimpleDocumentChunkSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentChunk
         fields = ['id', 'text', 'created_at', 'updated_at']
+
+class ContextDocumentChunkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentChunk
+        fields = ['id']
