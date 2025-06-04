@@ -18,4 +18,5 @@ urlpatterns = [
     # Conversation
     path('simple-conversation/', SimpleConversationView.as_view({'get': 'list'}), name='simple-conversation'),
     path('conversation/<int:pk>/', ConversationView.as_view({'get': 'retrieve'}), name='conversation-detail'),
+    path('conversation/', ConversationView.as_view({'post': 'create'}), name='conversation'),
 ]

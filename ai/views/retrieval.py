@@ -12,6 +12,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 import json
 from pydantic import ValidationError
+import re
 
 class RAGResponse(BaseModel):
     answer: str
@@ -29,7 +30,13 @@ class HybridRetrievalView(GenericView):
 
     @transaction.atomic
     def create(self, request):
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        llm = ChatOpenAI(
+            model="gpt-4o-mini", 
+            temperature=0,
+            model_kwargs={
+                "response_format": {"type": "json_object"}
+            }
+        )
         
         conversation = Conversation.objects.get(id=request.data.get("conversation_id"))
         
@@ -51,11 +58,33 @@ class HybridRetrievalView(GenericView):
 Documents:
 {context}
 
-You must only respond in JSON format with exactly this structure, and nothing else.:
+CRITICAL INSTRUCTIONS FOR RESPONSE FORMAT:
+- You MUST respond ONLY with valid JSON
+- Do NOT include any text before or after the JSON
+- Do NOT include markdown code blocks or any formatting
+- Your entire response must be parseable as JSON
+
+CRITICAL INSTRUCTIONS FOR ANSWER FORMATTING:
+- Format your answer in well-structured paragraphs with proper spacing
+- Use bullet points (•) when listing unordered items
+- Use numbers (1., 2., 3., etc.) when listing ordered items
+- Use line breaks (\n) to separate paragraphs and sections
+- Make the text easy to read and professional
+- Use natural flowing text with proper transitions between ideas and paragraphs
+
+Respond with this EXACT JSON structure:
 {{
-    "answer": "your detailed answer here",
-    "reason": "Explain why you answered the question with the answer you did, and from what context did you use to answer your question."
-}}"""
+    "answer": "your detailed answer here with proper formatting using bullet points and paragraphs",
+    "reason": "explain why you answered with this response and what context you used"
+}}
+
+Example response:
+{{
+    "answer": "To enroll at UP Cebu, you need to meet several requirements.\n\n• Pass the UPCAT (University of the Philippines College Admission Test)\n• Submit all required documents including transcripts and recommendation letters\n• Meet the minimum grade requirements for your chosen program\n\nThe admission process is competitive, so it's important to prepare thoroughly for the entrance examination.",
+    "reason": "This information comes from the UP Cebu admissions document which outlines the entrance examination and requirements."
+}}
+
+REMEMBER: Your response must be valid JSON that can be parsed directly. Do not include any other text."""
 
 
 
@@ -78,33 +107,56 @@ You must only respond in JSON format with exactly this structure, and nothing el
         result = llm.invoke(messages)
         
         try:
-            # Parse the JSON response
+            # First try to parse the response directly as JSON
             response_data = json.loads(result.content)
             structured = RAGResponse.model_validate(response_data)
             
-            user_message = Message.objects.create(
-                conversation=conversation,
-                role="user",
-                content=request.data.get("query")
-            )
-            user_message.context.set(document_chunks)
-            
-            # Create a new message for the assistant
-            assistant_message = Message.objects.create(
-                conversation=conversation,
-                role="assistant",
-                content=structured.answer
-            )
-            assistant_message.context.set(document_chunks)
-            
-            response = structured.model_dump()
-            response["context"] = similar_text
-
-            return Response(response, status=status.HTTP_200_OK)
         except (json.JSONDecodeError, ValidationError) as e:
-            print(f"\n❌ Failed to parse LLM response: {e}")
+            print(f"\nDirect JSON parsing failed: {e}")
             print(f"Raw response: {result.content}")
-            return Response(
-                {"error": "Failed to parse response", "details": str(e)}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            
+            # Fallback: Try to extract JSON from the response
+            try:
+                # Look for JSON-like content between { and }
+                json_match = re.search(r'\{.*?\}', result.content, re.DOTALL)
+                
+                if json_match:
+                    json_str = json_match.group(0)
+                    print(f"Extracted JSON: {json_str}")
+                    response_data = json.loads(json_str)
+                    structured = RAGResponse.model_validate(response_data)
+                else:
+                    # Final fallback: create structured response from raw text
+                    structured = RAGResponse(
+                        answer=result.content,
+                        reason="Response was not in proper JSON format, using raw LLM output"
+                    )
+                    
+            except (json.JSONDecodeError, ValidationError) as fallback_error:
+                print(f"Fallback parsing also failed: {fallback_error}")
+                # Ultimate fallback
+                structured = RAGResponse(
+                    answer=result.content,
+                    reason="Response could not be parsed as JSON, using raw LLM output"
+                )
+        
+        # Create user message
+        user_message = Message.objects.create(
+            conversation=conversation,
+            role="user",
+            content=request.data.get("query")
+        )
+        user_message.context.set(document_chunks)
+        
+        # Create a new message for the assistant
+        assistant_message = Message.objects.create(
+            conversation=conversation,
+            role="assistant",
+            content=structured.answer
+        )
+        assistant_message.context.set(document_chunks)
+        
+        response = structured.model_dump()
+        response["context"] = similar_text
+
+        return Response(response, status=status.HTTP_200_OK)

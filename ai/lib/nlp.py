@@ -1,10 +1,23 @@
 import spacy
-from sentence_transformers import SentenceTransformer
+import onnxruntime as ort
+from transformers import PreTrainedTokenizerFast
+import numpy as np
+import os
 
 class NLPPreprocessor:
     def __init__(self):
         self.nlp_model = spacy.load("en_core_web_md")
-        self.sbert_model = SentenceTransformer("all-MiniLM-L6-v2")
+        
+        # Setup ONNX model and tokenizer for all-MiniLM-L6-v2
+        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../models/all-MiniLM-L6-v2"))
+        model_path = os.path.join(model_dir, "model_quantized.onnx")
+        tokenizer_path = os.path.join(model_dir, "tokenizer.json")
+        
+        # Load tokenizer directly from tokenizer.json file
+        self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_path)
+        
+        # Create ONNX Runtime session
+        self.onnx_session = ort.InferenceSession(model_path)
 
     def get_data(self):
         """Return all processed data as a dictionary"""
@@ -64,8 +77,25 @@ class NLPPreprocessor:
     #     return [preprocessed_token for preprocessed_token in preprocessed_tokens if not preprocessed_token.isdigit()]
     
     def _extract_embeddings(self):
-        """Extract sentence embeddings using SBERT"""
-        return self.sbert_model.encode(self.preprocessed_text)
+        """Extract sentence embeddings using ONNX Runtime"""
+        return self.get_embedding(self.preprocessed_text)
+    
+    def get_embedding(self, text: str):
+        """Get embedding for a given text using the quantized ONNX model"""
+        # Tokenize the input text
+        encoded = self.tokenizer(text, return_tensors="np", padding=True, truncation=True, max_length=512)
+        
+        # Run inference
+        outputs = self.onnx_session.run(None, {
+            "input_ids": encoded["input_ids"],
+            "attention_mask": encoded["attention_mask"]
+        })
+        
+        # The model has two outputs: [token_embeddings, sentence_embedding]
+        # Use the pre-computed sentence embedding (index 1) for efficiency
+        sentence_embedding = outputs[1]  # Shape: (batch_size, hidden_size)
+        
+        return sentence_embedding.squeeze() if sentence_embedding.shape[0] == 1 else sentence_embedding
     
     def _extract_pos(self):
         """Extract part-of-speech tags"""

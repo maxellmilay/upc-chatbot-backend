@@ -10,4 +10,4 @@ class SimpleConversationView(GenericView):
 class ConversationView(GenericView):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    allowed_methods = ['retrieve']
+    allowed_methods = ['retrieve', 'create']
