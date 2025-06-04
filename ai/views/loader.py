@@ -10,7 +10,7 @@ class DocumentView(GenericView):
     allowed_methods = ['create', 'list', 'retrieve', 'destroy']
     
     def post_create(self, request, instance):
-        print("\nCREATING DOCUMENT CHUNKS\n\n")
+        print("\nCREATING DOCUMENT CHUNKS\n")
         print(f"Loading document from {instance.file_url}")
         loader = DocumentLoader(instance.file_url)
         print(f"Loaded {len(loader.pages)} pages")
