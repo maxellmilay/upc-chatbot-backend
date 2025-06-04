@@ -4,3 +4,11 @@ __pycache__/
 .deepeval/
 db.sqlite3
 .pytest_cache/
+
+upc-chatbot-key
+upc-chatbot-key.pub
+
+# Terraform
+.terraform/
+.terraform.*
+terraform.*
