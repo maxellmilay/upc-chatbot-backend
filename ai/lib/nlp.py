@@ -1,12 +1,14 @@
 import spacy
 import onnxruntime as ort
 from transformers import PreTrainedTokenizerFast
+# from sentence_transformers import SentenceTransformer
 import numpy as np
 import os
 
 class NLPPreprocessor:
     def __init__(self):
         self.nlp_model = spacy.load("en_core_web_md")
+        # self.sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         
         # Setup ONNX model and tokenizer for all-MiniLM-L6-v2
         model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../models/all-MiniLM-L6-v2"))
@@ -96,6 +98,11 @@ class NLPPreprocessor:
         sentence_embedding = outputs[1]  # Shape: (batch_size, hidden_size)
         
         return sentence_embedding.squeeze() if sentence_embedding.shape[0] == 1 else sentence_embedding
+    
+    def get_embedding_backup(self, text: str):
+        """Backup method to get embedding using SentenceTransformers instead of ONNX"""        
+        embedding = self.sbert_model.encode(text, convert_to_tensor=False)
+        return embedding
     
     def _extract_pos(self):
         """Extract part-of-speech tags"""
