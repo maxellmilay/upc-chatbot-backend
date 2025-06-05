@@ -7,12 +7,13 @@ from rest_framework.response import Response
 from django.db import transaction
 from rest_framework import status
 from pydantic import BaseModel
-from typing import List
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 import json
 from pydantic import ValidationError
 import re
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class RAGResponse(BaseModel):
     answer: str
@@ -22,6 +23,8 @@ class HybridRetrievalView(GenericView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     allowed_methods = ['create']
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     
     def _retrieve(self, query):
         retriever = HybridRetriever()
