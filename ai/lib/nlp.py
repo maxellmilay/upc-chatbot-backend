@@ -1,25 +1,25 @@
 import spacy
-import onnxruntime as ort
-from transformers import PreTrainedTokenizerFast
-# from sentence_transformers import SentenceTransformer
-import numpy as np
-import os
+# import onnxruntime as ort
+# from transformers import PreTrainedTokenizerFast
+from sentence_transformers import SentenceTransformer
+# import numpy as np
+# import os
 
 class NLPPreprocessor:
     def __init__(self):
         self.nlp_model = spacy.load("en_core_web_md")
-        # self.sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        self.sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         
-        # Setup ONNX model and tokenizer for all-MiniLM-L6-v2
-        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../models/all-MiniLM-L6-v2"))
-        model_path = os.path.join(model_dir, "model_quantized.onnx")
-        tokenizer_path = os.path.join(model_dir, "tokenizer.json")
+        # # Setup ONNX model and tokenizer for all-MiniLM-L6-v2
+        # model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../models/all-MiniLM-L6-v2"))
+        # model_path = os.path.join(model_dir, "model_quantized.onnx")
+        # tokenizer_path = os.path.join(model_dir, "tokenizer.json")
         
-        # Load tokenizer directly from tokenizer.json file
-        self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_path)
+        # # Load tokenizer directly from tokenizer.json file
+        # self.tokenizer = PreTrainedTokenizerFast(tokenizer_file=tokenizer_path)
         
-        # Create ONNX Runtime session
-        self.onnx_session = ort.InferenceSession(model_path)
+        # # Create ONNX Runtime session
+        # self.onnx_session = ort.InferenceSession(model_path)
 
     def get_data(self):
         """Return all processed data as a dictionary"""
@@ -80,7 +80,7 @@ class NLPPreprocessor:
     
     def _extract_embeddings(self):
         """Extract sentence embeddings using ONNX Runtime"""
-        return self.get_embedding(self.preprocessed_text)
+        return self.get_embedding_backup(self.preprocessed_text)
     
     def get_embedding(self, text: str):
         """Get embedding for a given text using the quantized ONNX model"""
